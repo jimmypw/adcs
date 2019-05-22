@@ -15,7 +15,6 @@ type WebEnrollmentServer struct {
 	URL      string
 	Username string
 	Password string
-	cookie   *http.Cookie
 }
 
 // SubmitNewRequest will submit the WebEnrollment reqest and populate the object with the response
@@ -35,12 +34,10 @@ func (wes *WebEnrollmentServer) SubmitNewRequest(incsr []byte, template string) 
 }
 
 // CheckPendingRequest will check to see if the request has been completed or not.
-func (wes *WebEnrollmentServer) CheckPendingRequest(cookiename, cookieval string, requestid int) (WebEnrollmentResponse, error) {
+func (wes *WebEnrollmentServer) CheckPendingRequest(requestid int) (WebEnrollmentResponse, error) {
 	wer := WebEnrollmentPendingRequest{
 		webenrollmentserver: wes,
 		requestid:           requestid,
-		cookiename:          cookiename,
-		cookieval:           cookieval,
 	}
 
 	response, err := wer.Submit()
@@ -50,39 +47,11 @@ func (wes *WebEnrollmentServer) CheckPendingRequest(cookiename, cookieval string
 	return response, nil
 }
 
-// SetCookie will restore a cookie to a previous state provided by the user
-func (wes *WebEnrollmentServer) SetCookie(name string, value string) {
-	wes.cookie = new(http.Cookie)
-	wes.cookie.Name = name
-	wes.cookie.Value = value
-}
-
 func (wes WebEnrollmentServer) newCertificateRequestURL() string {
 	return fmt.Sprintf("%s/certfnsh.asp", wes.URL)
 }
 func (wes WebEnrollmentServer) newCertificateResponseURL() string {
 	return fmt.Sprintf("%s/certnew.cer", wes.URL)
-}
-
-func (wes *WebEnrollmentServer) updateCookie() error {
-	client := &http.Client{
-		Transport: ntlmssp.Negotiator{
-			RoundTripper: &http.Transport{},
-		},
-	}
-
-	req, _ := http.NewRequest("GET", wes.newCertificateRequestURL(), nil)
-	req.SetBasicAuth(wes.Username, wes.Password)
-	resp, err := client.Do(req)
-	if err != nil {
-		return err
-	}
-	theCookie := findCookieLike("ASPSESSIONID", resp.Cookies())
-	if theCookie == nil {
-		return errors.New("Unable to update cookie, invalid username and password?")
-	}
-	wes.cookie = theCookie
-	return nil
 }
 
 // GetCertificate will retrieve the specified certificate from the server
@@ -97,7 +66,6 @@ func (wes *WebEnrollmentServer) GetCertificate(requestid int) ([]byte, error) {
 
 	req, _ := http.NewRequest("GET", url, nil)
 	req.SetBasicAuth(wes.Username, wes.Password)
-	req.AddCookie(wes.cookie)
 	resp, err := client.Do(req)
 
 	if err != nil {

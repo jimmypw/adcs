@@ -10,16 +10,14 @@ import (
 )
 
 type options struct {
-	csr        *string
-	url        *string
-	username   *string
-	password   *string
-	template   *string
-	out        *string
-	requestid  *int
-	cookiename *string
-	cookieval  *string
-	pend       *bool
+	csr       *string
+	url       *string
+	username  *string
+	password  *string
+	template  *string
+	out       *string
+	requestid *int
+	pend      *bool
 }
 
 func parseSwitches() options {
@@ -30,8 +28,6 @@ func parseSwitches() options {
 	opt.password = flag.String("password", "", "The password to authenticate with")
 	opt.template = flag.String("template", "", "The short name of the template you wish to use")
 	opt.out = flag.String("out", "", "Where to save the certificate.")
-	opt.cookiename = flag.String("cookiename", "", "Name of the session cookie.")
-	opt.cookieval = flag.String("cookieval", "", "The value of the cookie.")
 	opt.requestid = flag.Int("requestid", 0, "The value of the cookie.")
 	opt.pend = flag.Bool("pend", false, "Attempt to retrieve a pending request")
 	flag.Parse()
@@ -58,7 +54,7 @@ func processSuccessfulRequest(opt options, wer adcs.WebEnrollmentResponse) {
 }
 
 func processPendingRequest(opt options, wer adcs.WebEnrollmentResponse) {
-	fmt.Printf("%s -pend -url %s -cookiename %s -cookieval %s -requestid %d\n", os.Args[0], wer.GetRequestURL(), wer.GetRequestCookieName(), wer.GetRequestCookieVal(), wer.GetRequestID())
+	fmt.Printf("%s -pend -url %s -requestid %d\n", os.Args[0], wer.GetRequestURL(), wer.GetRequestID())
 }
 
 func main() {
@@ -74,7 +70,7 @@ func main() {
 		// attempt to retrieve a pending request
 		var err error
 
-		response, err = wes.CheckPendingRequest(*opt.cookiename, *opt.cookieval, *opt.requestid)
+		response, err = wes.CheckPendingRequest(*opt.requestid)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(2)

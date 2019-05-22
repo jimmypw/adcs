@@ -32,16 +32,6 @@ func (wer WebEnrollmentResponse) GetRequestID() int {
 	return wer.requestid
 }
 
-// GetRequestCookieName will return the name of the cookie associated with the request
-func (wer WebEnrollmentResponse) GetRequestCookieName() string {
-	return wer.webenrollmentrequest.GetServer().cookie.Name
-}
-
-// GetRequestCookieVal will return the value of the request cookie
-func (wer WebEnrollmentResponse) GetRequestCookieVal() string {
-	return wer.webenrollmentrequest.GetServer().cookie.Value
-}
-
 // GetRequestURL will reututn the url that the request was issued against.
 func (wer WebEnrollmentResponse) GetRequestURL() string {
 	return wer.webenrollmentrequest.GetServer().URL

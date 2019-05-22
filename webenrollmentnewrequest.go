@@ -51,7 +51,7 @@ func (wer *WebEnrollmentNewRequest) Submit() (WebEnrollmentResponse, error) {
 		fallthrough
 	default:
 		// need to try and establish what went wrong here
-		panic("The request failed and i do not know why")
+		panic(fmt.Sprintf("The request failed and i do not know why: response.status =  %d", response.status))
 	}
 
 	return response, nil
@@ -63,10 +63,6 @@ func (wer *WebEnrollmentNewRequest) GetServer() *WebEnrollmentServer {
 }
 
 func (wer WebEnrollmentNewRequest) postHTTPRequest() (*http.Response, error) {
-	err := wer.GetServer().updateCookie()
-	if err != nil {
-		return nil, err
-	}
 
 	client := &http.Client{
 		Transport: ntlmssp.Negotiator{
@@ -77,7 +73,6 @@ func (wer WebEnrollmentNewRequest) postHTTPRequest() (*http.Response, error) {
 	postbody := wer.certificateRequestBody()
 	req, _ := http.NewRequest("POST", wer.webenrollmentserver.newCertificateRequestURL(), postbody)
 	req.SetBasicAuth(wer.webenrollmentserver.Username, wer.webenrollmentserver.Password)
-	req.AddCookie(wer.webenrollmentserver.cookie)
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	resp, err := client.Do(req)
 

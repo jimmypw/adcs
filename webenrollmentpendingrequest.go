@@ -16,8 +16,6 @@ import (
 type WebEnrollmentPendingRequest struct {
 	webenrollmentserver *WebEnrollmentServer
 	requestid           int
-	cookiename          string
-	cookieval           string
 }
 
 // Submit implements the WebEnrollmentRequest interface
@@ -64,7 +62,6 @@ func (wepr *WebEnrollmentPendingRequest) GetServer() *WebEnrollmentServer {
 }
 
 func (wepr WebEnrollmentPendingRequest) postHTTPRequest() (*http.Response, error) {
-	wepr.GetServer().SetCookie(wepr.cookiename, wepr.cookieval)
 
 	client := &http.Client{
 		Transport: ntlmssp.Negotiator{
@@ -75,7 +72,6 @@ func (wepr WebEnrollmentPendingRequest) postHTTPRequest() (*http.Response, error
 	postbody := wepr.pendingRequestBody()
 	req, _ := http.NewRequest("POST", wepr.webenrollmentserver.newCertificateRequestURL(), postbody)
 	req.SetBasicAuth(wepr.webenrollmentserver.Username, wepr.webenrollmentserver.Password)
-	req.AddCookie(wepr.webenrollmentserver.cookie)
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	resp, err := client.Do(req)
 
