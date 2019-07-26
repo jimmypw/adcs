@@ -96,3 +96,8 @@ func findCookieLike(match string, cookies []*http.Cookie) *http.Cookie {
 func (wes *WebEnrollmentServer) GetCertificate(requestid int) ([]byte, error) {
 	return wes.getCertificate(string(requestid))
 }
+
+// GetCACertificate will retrieve the CA certificate from the server
+func (wes *WebEnrollmentServer) GetCACertificate() ([]byte, error) {
+	return wes.getCertificate("CACert")
+}
