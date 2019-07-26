@@ -2,6 +2,7 @@ package adcs
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -47,6 +48,8 @@ func (wer *WebEnrollmentNewRequest) Submit() (WebEnrollmentResponse, error) {
 	case PENDING:
 		// parse certificate number
 		response.requestid = wer.parsePendingRequestNumber(respbody.String())
+	case UNAUTHORIZED:
+		return WebEnrollmentResponse{}, errors.New("Access is denied due to invalid credentials")
 	case FAIL:
 		fallthrough
 	default:
@@ -87,11 +90,14 @@ func (wer WebEnrollmentNewRequest) parseSuccessStatus(resp []byte) int {
 	var returndata int
 	issued := regexp.MustCompile("Certificate Issued")
 	pending := regexp.MustCompile("Your certificate request has been received.")
+	unauthorized := regexp.MustCompile("Unauthorized: Access is denied due to invalid credentials.")
 
 	if issued.Match(resp) {
 		returndata = SUCCESS
 	} else if pending.Match(resp) {
 		returndata = PENDING
+	} else if unauthorized.Match(resp) {
+		returndata = UNAUTHORIZED
 	} else {
 		returndata = FAIL
 	}
