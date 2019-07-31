@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
+	"strconv"
 
 	ntlmssp "github.com/Azure/go-ntlmssp"
 )
@@ -94,7 +95,7 @@ func findCookieLike(match string, cookies []*http.Cookie) *http.Cookie {
 
 // GetCertificate will retrieve the specified ID certificate from the server
 func (wes *WebEnrollmentServer) GetCertificate(requestid int) ([]byte, error) {
-	return wes.getCertificate(string(requestid))
+	return wes.getCertificate(strconv.Itoa(requestid))
 }
 
 // GetCACertificate will retrieve the CA certificate from the server
