@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	ntlmssp "github.com/Azure/go-ntlmssp"
 )
@@ -125,14 +126,19 @@ func (wer WebEnrollmentNewRequest) certAttributes() string {
 }
 
 func (wer WebEnrollmentNewRequest) certificateRequestBody() io.Reader {
-	var postbody strings.Builder
-	postbody.WriteString(fmt.Sprintf("Mode=newreq"))
-	postbody.WriteByte('&')
-	postbody.WriteString(fmt.Sprintf("CertRequest=%s", wer.stringifyCertificateRequest()))
-	postbody.WriteByte('&')
-	postbody.WriteString(fmt.Sprintf("CertAttrib=%s", wer.certAttributes()))
-	return strings.NewReader(postbody.String())
+	timestamp := time.Now().Format(time.RFC1123)
 
+	thisReqParams := certificateRequestParameters{
+		Mode:             "newreq",
+		CertRequest:      wer.stringifyCertificateRequest(),
+		CertAttrib:       wer.certAttributes(),
+		FriendlyType:     fmt.Sprintf("Saved-Request Certificate (%s)", timestamp),
+		ThumbPrint:       "",
+		TargetStoreFlags: 0,
+		SaveCert:         "yes",
+	}
+
+	return strings.NewReader(thisReqParams.String())
 }
 
 func (wer WebEnrollmentNewRequest) parsePendingRequestNumber(response string) int {
