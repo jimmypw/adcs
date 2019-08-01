@@ -88,16 +88,14 @@ func (wepr WebEnrollmentPendingRequest) pendingRequestBody() io.Reader {
 	// 		SaveCert	yes
 	// 		TargetStoreFlags	0
 
-	var response strings.Builder
-	response.WriteString("Mode=chkpnd")
-	response.WriteByte('&')
-	response.WriteString(fmt.Sprintf("ReqID=%d", wepr.requestid))
-	response.WriteByte('&')
-	response.WriteString("SaveCert=yes")
-	response.WriteByte('&')
-	response.WriteString("TargetStoreFlags=0")
-	return strings.NewReader(response.String())
+	thisReqParams := pendingRequestParameters{
+		Mode:             "chkpnd",
+		TargetStoreFlags: 0,
+		SaveCert:         "yes",
+		ReqID:            wepr.requestid,
+	}
 
+	return strings.NewReader(thisReqParams.String())
 }
 
 func (wepr WebEnrollmentPendingRequest) parseSuccessStatus(resp []byte) int {
