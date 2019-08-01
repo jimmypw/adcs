@@ -2,7 +2,7 @@ package adcs
 
 import (
 	"bytes"
-	"fmt"
+	"errors"
 	"io"
 	"net/http"
 	"regexp"
@@ -46,6 +46,8 @@ func (wepr *WebEnrollmentPendingRequest) Submit() (WebEnrollmentResponse, error)
 		}
 	case PENDING:
 		response.requestid = wepr.requestid
+	case UNAUTHORIZED:
+		return WebEnrollmentResponse{}, errors.New("Unauthorized: Access is denied")
 	case FAIL:
 		fallthrough
 	default:
@@ -102,11 +104,14 @@ func (wepr WebEnrollmentPendingRequest) parseSuccessStatus(resp []byte) int {
 	var returndata int
 	issued := regexp.MustCompile("The certificate you requested was issued to you")
 	pending := regexp.MustCompile("still pending")
+	unauthorized := regexp.MustCompile("Unauthorized: Access is denied due to invalid credentials.")
 
 	if issued.Match(resp) {
 		returndata = SUCCESS
 	} else if pending.Match(resp) {
 		returndata = PENDING
+	} else if unauthorized.Match(resp) {
+		returndata = UNAUTHORIZED
 	} else {
 		returndata = FAIL
 	}
