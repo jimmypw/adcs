@@ -23,23 +23,23 @@ type pendingRequestParameters struct {
 	ReqID            int
 }
 
-func (certReqParams *certificateRequestParameters) String() string {
-	certReqParamsReflection := reflect.Indirect(reflect.ValueOf(certReqParams))
+func (reqParams *certificateRequestParameters) String() string {
+	reqParamsReflection := reflect.Indirect(reflect.ValueOf(reqParams))
 
 	var parameters []string
-	for i := 0; i < certReqParamsReflection.NumField(); i++ {
-		parameters = append(parameters, fmt.Sprintf("%s=%s", certReqParamsReflection.Type().Field(i).Name, certReqParamsReflection.Field(i).Interface()))
+	for i := 0; i < reqParamsReflection.NumField(); i++ {
+		parameters = append(parameters, fmt.Sprintf("%s=%s", reqParamsReflection.Type().Field(i).Name, reqParamsReflection.Field(i).Interface()))
 	}
 
 	return strings.Join(parameters, "&")
 }
 
-func (pendReqParams *pendingRequestParameters) String() string {
-	pendReqParamsReflection := reflect.Indirect(reflect.ValueOf(pendReqParams))
+func (reqParams *pendingRequestParameters) String() string {
+	reqParamsReflection := reflect.Indirect(reflect.ValueOf(reqParams))
 
 	var parameters []string
-	for i := 0; i < pendReqParamsReflection.NumField(); i++ {
-		parameters = append(parameters, fmt.Sprintf("%s=%s", pendReqParamsReflection.Type().Field(i).Name, pendReqParamsReflection.Field(i).Interface()))
+	for i := 0; i < reqParamsReflection.NumField(); i++ {
+		parameters = append(parameters, fmt.Sprintf("%s=%s", reqParamsReflection.Type().Field(i).Name, reqParamsReflection.Field(i).Interface()))
 	}
 
 	return strings.Join(parameters, "&")
