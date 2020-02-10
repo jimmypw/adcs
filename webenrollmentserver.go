@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
+	"strconv"
 
 	ntlmssp "github.com/Azure/go-ntlmssp"
 )
@@ -54,15 +55,15 @@ func (wes WebEnrollmentServer) newCertificateResponseURL() string {
 	return fmt.Sprintf("%s/certnew.cer", wes.URL)
 }
 
-// GetCertificate will retrieve the specified certificate from the server
-func (wes *WebEnrollmentServer) GetCertificate(requestid int) ([]byte, error) {
+// getCertificate will retrieve the specified certificate from the server
+func (wes *WebEnrollmentServer) getCertificate(requestid string) ([]byte, error) {
 	client := &http.Client{
 		Transport: ntlmssp.Negotiator{
 			RoundTripper: &http.Transport{},
 		},
 	}
 
-	url := fmt.Sprintf("%s?ReqID=%d&Enc=b64", wes.newCertificateResponseURL(), requestid)
+	url := fmt.Sprintf("%s?ReqID=%s&Enc=b64", wes.newCertificateResponseURL(), requestid)
 
 	req, _ := http.NewRequest("GET", url, nil)
 	req.SetBasicAuth(wes.Username, wes.Password)
@@ -90,4 +91,14 @@ func findCookieLike(match string, cookies []*http.Cookie) *http.Cookie {
 		}
 	}
 	return nil
+}
+
+// GetCertificate will retrieve the specified ID certificate from the server
+func (wes *WebEnrollmentServer) GetCertificate(requestid int) ([]byte, error) {
+	return wes.getCertificate(strconv.Itoa(requestid))
+}
+
+// GetCACertificate will retrieve the CA certificate from the server
+func (wes *WebEnrollmentServer) GetCACertificate() ([]byte, error) {
+	return wes.getCertificate("CACert")
 }

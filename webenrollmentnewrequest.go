@@ -2,12 +2,14 @@ package adcs
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	ntlmssp "github.com/Azure/go-ntlmssp"
 )
@@ -47,11 +49,13 @@ func (wer *WebEnrollmentNewRequest) Submit() (WebEnrollmentResponse, error) {
 	case PENDING:
 		// parse certificate number
 		response.requestid = wer.parsePendingRequestNumber(respbody.String())
+	case UNAUTHORIZED:
+		return WebEnrollmentResponse{}, errors.New("Access is denied due to invalid credentials")
 	case FAIL:
 		fallthrough
 	default:
 		// need to try and establish what went wrong here
-		panic(fmt.Sprintf("The request failed and i do not know why: response.status =  %d", response.status))
+		panic(fmt.Sprintf("The request failed and I don't know why\nresponse.status =  %d\nResponse body:\n", response.status, respbody.String()))
 	}
 
 	return response, nil
@@ -87,11 +91,14 @@ func (wer WebEnrollmentNewRequest) parseSuccessStatus(resp []byte) int {
 	var returndata int
 	issued := regexp.MustCompile("Certificate Issued")
 	pending := regexp.MustCompile("Your certificate request has been received.")
+	unauthorized := regexp.MustCompile("Unauthorized: Access is denied due to invalid credentials.")
 
 	if issued.Match(resp) {
 		returndata = SUCCESS
 	} else if pending.Match(resp) {
 		returndata = PENDING
+	} else if unauthorized.Match(resp) {
+		returndata = UNAUTHORIZED
 	} else {
 		returndata = FAIL
 	}
@@ -119,14 +126,19 @@ func (wer WebEnrollmentNewRequest) certAttributes() string {
 }
 
 func (wer WebEnrollmentNewRequest) certificateRequestBody() io.Reader {
-	var postbody strings.Builder
-	postbody.WriteString(fmt.Sprintf("Mode=newreq"))
-	postbody.WriteByte('&')
-	postbody.WriteString(fmt.Sprintf("CertRequest=%s", wer.stringifyCertificateRequest()))
-	postbody.WriteByte('&')
-	postbody.WriteString(fmt.Sprintf("CertAttrib=%s", wer.certAttributes()))
-	return strings.NewReader(postbody.String())
+	timestamp := time.Now().Format(time.RFC1123)
 
+	thisReqParams := certificateRequestParameters{
+		Mode:             "newreq",
+		CertRequest:      wer.stringifyCertificateRequest(),
+		CertAttrib:       wer.certAttributes(),
+		FriendlyType:     fmt.Sprintf("Saved-Request Certificate (%s)", timestamp),
+		ThumbPrint:       "",
+		TargetStoreFlags: 0,
+		SaveCert:         "yes",
+	}
+
+	return strings.NewReader(thisReqParams.String())
 }
 
 func (wer WebEnrollmentNewRequest) parsePendingRequestNumber(response string) int {

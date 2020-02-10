@@ -5,6 +5,8 @@ const (
 	SUCCESS = 0
 	// PENDING status
 	PENDING = 1
+	// UNAUTHORIZED status
+	UNAUTHORIZED = 2
 	// FAIL status
 	FAIL = 3
 )

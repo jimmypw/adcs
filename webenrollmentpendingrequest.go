@@ -2,7 +2,7 @@ package adcs
 
 import (
 	"bytes"
-	"fmt"
+	"errors"
 	"io"
 	"net/http"
 	"regexp"
@@ -46,6 +46,8 @@ func (wepr *WebEnrollmentPendingRequest) Submit() (WebEnrollmentResponse, error)
 		}
 	case PENDING:
 		response.requestid = wepr.requestid
+	case UNAUTHORIZED:
+		return WebEnrollmentResponse{}, errors.New("Unauthorized: Access is denied")
 	case FAIL:
 		fallthrough
 	default:
@@ -88,27 +90,28 @@ func (wepr WebEnrollmentPendingRequest) pendingRequestBody() io.Reader {
 	// 		SaveCert	yes
 	// 		TargetStoreFlags	0
 
-	var response strings.Builder
-	response.WriteString("Mode=chkpnd")
-	response.WriteByte('&')
-	response.WriteString(fmt.Sprintf("ReqID=%d", wepr.requestid))
-	response.WriteByte('&')
-	response.WriteString("SaveCert=yes")
-	response.WriteByte('&')
-	response.WriteString("TargetStoreFlags=0")
-	return strings.NewReader(response.String())
+	thisReqParams := pendingRequestParameters{
+		Mode:             "chkpnd",
+		TargetStoreFlags: 0,
+		SaveCert:         "yes",
+		ReqID:            wepr.requestid,
+	}
 
+	return strings.NewReader(thisReqParams.String())
 }
 
 func (wepr WebEnrollmentPendingRequest) parseSuccessStatus(resp []byte) int {
 	var returndata int
 	issued := regexp.MustCompile("The certificate you requested was issued to you")
 	pending := regexp.MustCompile("still pending")
+	unauthorized := regexp.MustCompile("Unauthorized: Access is denied due to invalid credentials.")
 
 	if issued.Match(resp) {
 		returndata = SUCCESS
 	} else if pending.Match(resp) {
 		returndata = PENDING
+	} else if unauthorized.Match(resp) {
+		returndata = UNAUTHORIZED
 	} else {
 		returndata = FAIL
 	}
