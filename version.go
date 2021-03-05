@@ -9,7 +9,7 @@ var VersionMaj = 1
 var VersionMin = 0
 
 // VersionPat is the patch version
-var VersionPat = 0
+var VersionPat = 1
 
 // ShowVersion Generate the version string
 func ShowVersion() {
