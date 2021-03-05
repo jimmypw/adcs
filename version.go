@@ -6,7 +6,7 @@ import "fmt"
 var VersionMaj = 1
 
 // VersionMin is the minor version
-var VersionMin = 0
+var VersionMin = 1
 
 // VersionPat is the patch version
 var VersionPat = 1
