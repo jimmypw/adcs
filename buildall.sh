@@ -5,6 +5,7 @@ if [ ! -d out ]; then
 fi
 
 TARGETS=$(go tool dist list)
+VERSION=$(go run cli/adcscli/main.go -v)
 
 for line in ${TARGETS}; do
     GOOS=$(echo ${line} | cut -d '/' -f 1)
@@ -17,8 +18,8 @@ for line in ${TARGETS}; do
     
     export GOOS
     export GOARCH
-    echo "Building adcscli-${GOOS}-${GOARCH}"
-    go build -o "out/adcscli-${GOOS}-${GOARCH}${suffix}" cli/adcscli/main.go
+    echo "Building adcscli-${VERSION}-${GOOS}-${GOARCH}"
+    go build -o "out/adcscli-${VERSION}-${GOOS}-${GOARCH}${suffix}" cli/adcscli/main.go
 done
 
 cd out
