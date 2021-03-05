@@ -55,7 +55,7 @@ func (wer *WebEnrollmentNewRequest) Submit() (WebEnrollmentResponse, error) {
 		fallthrough
 	default:
 		// need to try and establish what went wrong here
-		panic(fmt.Sprintf("The request failed and I don't know why\nresponse.status =  %d\nResponse body:\n", response.status, respbody.String()))
+		panic(fmt.Sprintf("The request failed and I don't know why\nresponse.status =  %d\nResponse body:%s\n", response.status, respbody.String()))
 	}
 
 	return response, nil
