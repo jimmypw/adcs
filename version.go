@@ -13,5 +13,5 @@ var VersionPat = 0
 
 // ShowVersion Generate the version string
 func ShowVersion() {
-	fmt.Printf("adcscli version %d.%d.%d\n", VersionMaj, VersionMin, VersionPat)
+	fmt.Printf("adcscli version %d.%d.%d https://github.com/jimmypw/adcs\n", VersionMaj, VersionMin, VersionPat)
 }
