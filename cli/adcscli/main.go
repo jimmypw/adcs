@@ -18,6 +18,7 @@ type options struct {
 	out       *string
 	requestid *int
 	pend      *bool
+	version   *bool
 }
 
 func parseSwitches() options {
@@ -30,6 +31,7 @@ func parseSwitches() options {
 	opt.out = flag.String("out", "", "Where to save the certificate.")
 	opt.requestid = flag.Int("requestid", 0, "The value of the cookie.")
 	opt.pend = flag.Bool("pend", false, "Attempt to retrieve a pending request")
+	opt.version = flag.Bool("v", false, "Show Version Information.")
 	flag.Parse()
 	return opt
 }
@@ -64,6 +66,11 @@ func main() {
 		URL:      *opt.url,
 		Username: *opt.username,
 		Password: *opt.password,
+	}
+
+	if *opt.version {
+		adcs.ShowVersion()
+		os.Exit(1)
 	}
 
 	if *opt.pend {
