@@ -1,12 +1,20 @@
 #!/usr/bin/env bash
 
-ARCHS=('amd64', '386', 'arm')
-OSS=('linux','darwin','windows','netbsd')
+if [ ! -d out ]; then
+    mkdir out
+fi
 
-mkdir out
+TARGETS=$(go tool dist list)
 
-for GOARCH in $ARCHS; do
-    for GOOS in $OSS; do
-        go build -o out/adcscli-${GOOS}-${GOARCH} cli/adcscli
-    done
+for line in ${TARGETS}; do
+    GOOS=$(echo ${line} | cut -d '/' -f 1)
+    GOARCH=$(echo ${line} | cut -d '/' -f 2)
+
+    export GOOS
+    export GOARCH
+    echo "Building adcscli-${GOOS}-${GOARCH}"
+    go build -o out/adcscli-${GOOS}-${GOARCH} cli/adcscli/main.go
 done
+
+cd out
+sha256sum *
