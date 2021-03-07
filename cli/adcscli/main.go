@@ -143,7 +143,7 @@ func main() {
 		//   username
 		//   password
 		//   one of: csr / stdin
-		if !isFlagSet(*opt.url) {
+		if !isFlagSet("url") {
 			missingOption("url")
 		}
 		if !isFlagSet("username") {
@@ -152,8 +152,15 @@ func main() {
 		if !isFlagSet("password") {
 			missingOption("password")
 		}
-		if !isFlagSet("csr") {
-			missingOption("csr")
+
+		if !(isFlagSet("csr") || isFlagSet("stdin")) {
+			os.Stderr.WriteString("You must specify either -csr or -stdin.\n")
+			os.Exit(1)
+		}
+
+		if isFlagSet("csr") && isFlagSet("stdin") {
+			os.Stderr.WriteString("You must specify only one of either -csr or -stdin.\n")
+			os.Exit(1)
 		}
 
 		wes := adcs.WebEnrollmentServer{
@@ -162,11 +169,25 @@ func main() {
 			Password: *opt.password,
 		}
 
-		csr, err := ioutil.ReadFile(*opt.csr)
+		var csr []byte
+		if isFlagSet("csr") {
+			var err error
+			csr, err = ioutil.ReadFile(*opt.csr)
 
-		if err != nil {
-			fmt.Printf("Error: Unable to open certificate request %s\n", *opt.csr)
-			os.Exit(2)
+			if err != nil {
+				fmt.Printf("Error: Unable to open certificate request: %s\n", *opt.csr)
+				os.Exit(1)
+			}
+		} else if isFlagSet("stdin") {
+			csrlen, err := os.Stdin.Read(csr)
+			if err != nil {
+				fmt.Printf("Error: read csr from stdin: %s\n", *opt.csr)
+				os.Exit(1)
+			}
+			if csrlen == 0 {
+				os.Stderr.WriteString("Error: no data read from stdin\n")
+				os.Exit(1)
+			}
 		}
 
 		response, err := wes.SubmitNewRequest(csr, *opt.template)
