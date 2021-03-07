@@ -188,6 +188,9 @@ func main() {
 				os.Stderr.WriteString("Error: no data read from stdin\n")
 				os.Exit(1)
 			}
+		} else {
+			os.Stderr.WriteString("No valid CSR source specified.\n")
+			os.Exit(1)
 		}
 
 		response, err := wes.SubmitNewRequest(csr, *opt.template)
