@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"regexp"
 	"strconv"
 
 	ntlmssp "github.com/Azure/go-ntlmssp"
@@ -89,16 +88,6 @@ func (wes *WebEnrollmentServer) getCertificate(requestid string) ([]byte, error)
 	buf.ReadFrom(resp.Body)
 
 	return buf.Bytes(), nil
-}
-
-func findCookieLike(match string, cookies []*http.Cookie) *http.Cookie {
-	re := regexp.MustCompile(match)
-	for i := 0; i < len(cookies); i++ {
-		if re.MatchString(cookies[i].Name) {
-			return cookies[i]
-		}
-	}
-	return nil
 }
 
 // GetCertificate will retrieve the specified ID certificate from the server
