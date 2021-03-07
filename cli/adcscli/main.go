@@ -98,6 +98,11 @@ func main() {
 		os.Exit(1)
 	}
 
+	if *opt.pend && *opt.newreq {
+		os.Stderr.WriteString("You must only use one of -new and -pend.\n")
+		os.Exit(1)
+	}
+
 	if *opt.pend {
 		// attempt to retrieve a pending request
 		// requires the following to be set
