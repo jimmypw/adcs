@@ -152,6 +152,9 @@ func main() {
 		if !isFlagSet("password") {
 			missingOption("password")
 		}
+		if !isFlagSet("template") {
+			missingOption("template")
+		}
 
 		if !(isFlagSet("csr") || isFlagSet("stdin")) {
 			os.Stderr.WriteString("You must specify either -csr or -stdin.\n")
