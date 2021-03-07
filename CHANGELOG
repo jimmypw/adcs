@@ -5,6 +5,7 @@ TAGDATETBC 1.2.0 Changes
     * Updated Documentation
     * Added input validation 
     * Refactored CLI logic
+    * added the ability to pass csr in through STDIN
 
 20210205 1.1.1 Fixed printf in webenrollmentnewrequest
 20210205 1.1.0 Added Versioning
