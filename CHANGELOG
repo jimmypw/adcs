@@ -1,18 +1,16 @@
 TAGDATETBC 1.2.0 Changes
     * BREAKING CHANGES
         * A top level command either -new or -pend is required to run the appliaction. Previously -new was assumed and led to strange behaviour when run without any command line options.
-<<<<<<< HEAD
-=======
-    * Several minor bug fixes
->>>>>>> Updated Changelog
     * Updated Documentation
     * Added input validation 
     * Refactored CLI logic
     * added the ability to pass csr in through STDIN
+    * 20210720 Rebased on to v1.1.2
 20210720 1.1.2 Disabled HTTP/2 as this is not enabled in the standard ADCS deployment
     * Simplified the creation of the net/http client object
     * Bumped dependancy versions
     * Updated versioning to allow for a version suffix
+    * Several minor bug fixes
 20210205 1.1.1 Fixed printf in webenrollmentnewrequest
 20210205 1.1.0 Added Versioning
 
