@@ -11,8 +11,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	ntlmssp "github.com/Azure/go-ntlmssp"
 )
 
 // WebEnrollmentRequest interface is implemented by the
@@ -121,11 +119,7 @@ func (wer *WebEnrollmentNewRequest) GetServer() *WebEnrollmentServer {
 
 func (wer WebEnrollmentNewRequest) postHTTPRequest() (*http.Response, error) {
 
-	client := &http.Client{
-		Transport: ntlmssp.Negotiator{
-			RoundTripper: &http.Transport{},
-		},
-	}
+	client := NewClient()
 
 	postbody := wer.certificateRequestBody()
 	req, _ := http.NewRequest("POST", wer.webenrollmentserver.newCertificateRequestURL(), postbody)
@@ -271,11 +265,7 @@ func (wepr *WebEnrollmentPendingRequest) GetServer() *WebEnrollmentServer {
 
 func (wepr WebEnrollmentPendingRequest) postHTTPRequest() (*http.Response, error) {
 
-	client := &http.Client{
-		Transport: ntlmssp.Negotiator{
-			RoundTripper: &http.Transport{},
-		},
-	}
+	client := NewClient()
 
 	postbody := wepr.pendingRequestBody()
 	req, _ := http.NewRequest("POST", wepr.webenrollmentserver.newCertificateRequestURL(), postbody)

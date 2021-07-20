@@ -9,14 +9,17 @@ var VersionMaj = 1
 var VersionMin = 1
 
 // VersionPat is the patch version
-var VersionPat = 1
+var VersionPat = 2
+
+// VersionSuffix is the suffix displayed after the version string.
+var VersionSuffix = ""
 
 // ShowVersion Generate the version string
 func ShowVersion() {
-	fmt.Printf("v%d.%d.%d\n", VersionMaj, VersionMin, VersionPat)
+	fmt.Printf("v%d.%d.%d%s\n", VersionMaj, VersionMin, VersionPat, VersionSuffix)
 }
 
 // ShowSignature Generate the application signature
 func ShowSignature() {
-	fmt.Printf("adcscli version %d.%d.%d https://github.com/jimmypw/adcs\n", VersionMaj, VersionMin, VersionPat)
+	fmt.Printf("adcscli version %d.%d.%d%s https://github.com/jimmypw/adcs\n", VersionMaj, VersionMin, VersionPat, VersionSuffix)
 }

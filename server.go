@@ -2,6 +2,7 @@ package adcs
 
 import (
 	"bytes"
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"net/http"
@@ -55,13 +56,20 @@ func (wes WebEnrollmentServer) newCertificateResponseURL() string {
 	return fmt.Sprintf("%s/certnew.cer", wes.URL)
 }
 
-// getCertificate will retrieve the specified certificate from the server
-func (wes *WebEnrollmentServer) getCertificate(requestid string) ([]byte, error) {
-	client := &http.Client{
+// NewClient builds an http client object for ntlm authentication
+func NewClient() *http.Client {
+	return &http.Client{
 		Transport: ntlmssp.Negotiator{
-			RoundTripper: &http.Transport{},
+			RoundTripper: &http.Transport{
+				TLSNextProto: map[string]func(authority string, c *tls.Conn) http.RoundTripper{},
+			},
 		},
 	}
+}
+
+// getCertificate will retrieve the specified certificate from the server
+func (wes *WebEnrollmentServer) getCertificate(requestid string) ([]byte, error) {
+	client := NewClient()
 
 	url := fmt.Sprintf("%s?ReqID=%s&Enc=b64", wes.newCertificateResponseURL(), requestid)
 
