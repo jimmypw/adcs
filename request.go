@@ -101,7 +101,7 @@ func (wer *WebEnrollmentNewRequest) Submit() (WebEnrollmentResponse, error) {
 		// parse certificate number
 		response.requestid = wer.parsePendingRequestNumber(respbody.String())
 	case UNAUTHORIZED:
-		return WebEnrollmentResponse{}, errors.New("Access is denied due to invalid credentials")
+		return WebEnrollmentResponse{}, errors.New("access is denied due to invalid credentials")
 	case FAIL:
 		fallthrough
 	default:
@@ -156,10 +156,10 @@ func (wer WebEnrollmentNewRequest) parseSuccessStatus(resp []byte) int {
 func (wer WebEnrollmentNewRequest) stringifyCertificateRequest() string {
 	// CERT=$(cat foo.csr | tr -d '\n\r' | sed 's/+/%2B/g' | tr -s ' ' '+')
 	returndata := string(wer.csr)
-	re1 := regexp.MustCompile("\r")
-	re2 := regexp.MustCompile("\n")
-	re3 := regexp.MustCompile("\\+")
-	re4 := regexp.MustCompile(" ")
+	re1 := regexp.MustCompile(`\r`)
+	re2 := regexp.MustCompile(`\n`)
+	re3 := regexp.MustCompile(`\+`)
+	re4 := regexp.MustCompile(` `)
 	returndata = re1.ReplaceAllString(returndata, "")
 	returndata = re2.ReplaceAllString(returndata, "")
 	returndata = re3.ReplaceAllString(returndata, "%2B")
@@ -247,7 +247,7 @@ func (wepr *WebEnrollmentPendingRequest) Submit() (WebEnrollmentResponse, error)
 	case PENDING:
 		response.requestid = wepr.requestid
 	case UNAUTHORIZED:
-		return WebEnrollmentResponse{}, errors.New("Unauthorized: Access is denied")
+		return WebEnrollmentResponse{}, errors.New("unauthorized: Access is denied")
 	case FAIL:
 		fallthrough
 	default:

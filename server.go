@@ -81,7 +81,7 @@ func (wes *WebEnrollmentServer) getCertificate(requestid string) ([]byte, error)
 	}
 
 	if resp.StatusCode != 200 {
-		return nil, errors.New("Unable to request certificate")
+		return nil, errors.New("unable to request certificate")
 	}
 
 	buf := new(bytes.Buffer)
