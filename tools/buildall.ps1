@@ -1,11 +1,11 @@
-$archs=("amd64", "i386")
+$archs=("amd64", "386")
 $oss=("linux", "windows")
-
-mkdir build
 
 foreach ($a in $archs) {
     foreach ($o in $oss) {
         $outname="out/adcscli-$o-$a"
+        $env:GOOS=$o
+        $env:GOARCH=$a
         if ($o -eq "windows") {
             $outname+=".exe"
         }
