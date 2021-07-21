@@ -94,7 +94,7 @@ func main() {
 	opt := parseSwitches()
 
 	if *opt.version {
-		adcs.ShowVersion()
+		adcs.ShowSignature()
 		os.Exit(1)
 	}
 

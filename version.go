@@ -3,23 +3,23 @@ package adcs
 import "fmt"
 
 // VersionMaj is the major version
-var VersionMaj = 1
+const VersionMaj = 1
 
 // VersionMin is the minor version
-var VersionMin = 1
+const VersionMin = 1
 
 // VersionPat is the patch version
-var VersionPat = 2
+const VersionPat = 2
 
 // VersionSuffix is the suffix displayed after the version string.
-var VersionSuffix = ""
+const VersionSuffix = ""
 
 // ShowVersion Generate the version string
-func ShowVersion() {
-	fmt.Printf("v%d.%d.%d%s\n", VersionMaj, VersionMin, VersionPat, VersionSuffix)
+func BuildVersionString() string {
+	return fmt.Sprintf("v%d.%d.%d%s", VersionMaj, VersionMin, VersionPat, VersionSuffix)
 }
 
 // ShowSignature Generate the application signature
 func ShowSignature() {
-	fmt.Printf("adcscli version %d.%d.%d%s https://github.com/jimmypw/adcs\n", VersionMaj, VersionMin, VersionPat, VersionSuffix)
+	fmt.Printf("adcscli %s https://github.com/jimmypw/adcs\n", BuildVersionString())
 }
