@@ -6,10 +6,10 @@ import "fmt"
 const VersionMaj = 1
 
 // VersionMin is the minor version
-const VersionMin = 1
+const VersionMin = 2
 
 // VersionPat is the patch version
-const VersionPat = 2
+const VersionPat = 0
 
 // VersionSuffix is the suffix displayed after the version string.
 const VersionSuffix = ""
