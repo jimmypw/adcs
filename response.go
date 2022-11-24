@@ -9,6 +9,8 @@ const (
 	UNAUTHORIZED = 2
 	// FAIL status
 	FAIL = 3
+	// DENIED status
+	DENIED = 4
 )
 
 // WebEnrollmentResponse struct contains the parsed response from adcs
