@@ -249,7 +249,7 @@ func (wepr *WebEnrollmentPendingRequest) Submit() (WebEnrollmentResponse, error)
 	case UNAUTHORIZED:
 		return WebEnrollmentResponse{}, errors.New("Unauthorized: Access is denied")
 	case FAIL:
-		fallthrough
+		return WebEnrollmentResponse{}, fmt.Errorf("Fail: Unknown error has occurred")
 	default:
 		// need to try and establish what went wrong here
 		panic("The request failed and i do not know why")
