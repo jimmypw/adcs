@@ -9,7 +9,7 @@ var VersionMaj = 1
 var VersionMin = 1
 
 // VersionPat is the patch version
-var VersionPat = 2
+var VersionPat = 3
 
 // VersionSuffix is the suffix displayed after the version string.
 var VersionSuffix = ""
