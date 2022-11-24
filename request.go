@@ -105,7 +105,7 @@ func (wer *WebEnrollmentNewRequest) Submit() (WebEnrollmentResponse, error) {
 	case DENIED:
 		return WebEnrollmentResponse{}, errors.New("request was denied")
 	case FAIL:
-		fallthrough
+		return WebEnrollmentResponse{}, errors.New("Fail: Unknown error has occurred")
 	default:
 		// need to try and establish what went wrong here
 		panic(fmt.Sprintf("The request failed and I don't know why\nresponse.status =  %d\nResponse body:%s\n", response.status, respbody.String()))
