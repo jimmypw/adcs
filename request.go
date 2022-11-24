@@ -102,6 +102,8 @@ func (wer *WebEnrollmentNewRequest) Submit() (WebEnrollmentResponse, error) {
 		response.requestid = wer.parsePendingRequestNumber(respbody.String())
 	case UNAUTHORIZED:
 		return WebEnrollmentResponse{}, errors.New("Access is denied due to invalid credentials")
+	case DENIED:
+		return WebEnrollmentResponse{}, errors.New("request was denied")
 	case FAIL:
 		fallthrough
 	default:
@@ -139,6 +141,7 @@ func (wer WebEnrollmentNewRequest) parseSuccessStatus(resp []byte) int {
 	issued := regexp.MustCompile("Certificate Issued")
 	pending := regexp.MustCompile("Your certificate request has been received.")
 	unauthorized := regexp.MustCompile("Unauthorized: Access is denied due to invalid credentials.")
+	denied := regexp.MustCompile("Your certificate request was denied.")
 
 	if issued.Match(resp) {
 		returndata = SUCCESS
@@ -146,6 +149,8 @@ func (wer WebEnrollmentNewRequest) parseSuccessStatus(resp []byte) int {
 		returndata = PENDING
 	} else if unauthorized.Match(resp) {
 		returndata = UNAUTHORIZED
+	} else if denied.Match(resp) {
+		returndata = DENIED
 	} else {
 		returndata = FAIL
 	}
