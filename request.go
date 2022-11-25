@@ -105,7 +105,7 @@ func (wer *WebEnrollmentNewRequest) Submit() (WebEnrollmentResponse, error) {
 	case DENIED:
 		return WebEnrollmentResponse{}, errors.New("request was denied")
 	case FAIL:
-		fallthrough
+		return WebEnrollmentResponse{}, errors.New("Fail: Unknown error has occurred")
 	default:
 		// need to try and establish what went wrong here
 		panic(fmt.Sprintf("The request failed and I don't know why\nresponse.status =  %d\nResponse body:%s\n", response.status, respbody.String()))
@@ -254,7 +254,7 @@ func (wepr *WebEnrollmentPendingRequest) Submit() (WebEnrollmentResponse, error)
 	case UNAUTHORIZED:
 		return WebEnrollmentResponse{}, errors.New("Unauthorized: Access is denied")
 	case FAIL:
-		return WebEnrollmentResponse{}, fmt.Errorf("Fail: Unknown error has occurred")
+		return WebEnrollmentResponse{}, errors.New("Fail: Unknown error has occurred")
 	default:
 		// need to try and establish what went wrong here
 		panic("The request failed and i do not know why")
