@@ -101,14 +101,13 @@ func (wer *WebEnrollmentNewRequest) Submit() (WebEnrollmentResponse, error) {
 		// parse certificate number
 		response.requestid = wer.parsePendingRequestNumber(respbody.String())
 	case UNAUTHORIZED:
-		return WebEnrollmentResponse{}, errors.New("Access is denied due to invalid credentials")
+		return WebEnrollmentResponse{}, errors.New("access is denied due to invalid credentials")
 	case DENIED:
 		return WebEnrollmentResponse{}, errors.New("request was denied")
 	case FAIL:
-		return WebEnrollmentResponse{}, errors.New("Fail: Unknown error has occurred")
+		return WebEnrollmentResponse{}, errors.New("unknown error has occurred")
 	default:
-		// need to try and establish what went wrong here
-		panic(fmt.Sprintf("The request failed and I don't know why\nresponse.status =  %d\nResponse body:%s\n", response.status, respbody.String()))
+		return WebEnrollmentResponse{}, fmt.Errorf("the request failed and I don't know why\nresponse.status =  %d\nResponse body:%s", response.status, respbody.String())
 	}
 
 	return response, nil
@@ -161,10 +160,10 @@ func (wer WebEnrollmentNewRequest) parseSuccessStatus(resp []byte) int {
 func (wer WebEnrollmentNewRequest) stringifyCertificateRequest() string {
 	// CERT=$(cat foo.csr | tr -d '\n\r' | sed 's/+/%2B/g' | tr -s ' ' '+')
 	returndata := string(wer.csr)
-	re1 := regexp.MustCompile("\r")
-	re2 := regexp.MustCompile("\n")
-	re3 := regexp.MustCompile("\\+")
-	re4 := regexp.MustCompile(" ")
+	re1 := regexp.MustCompile(`\r`)
+	re2 := regexp.MustCompile(`\n`)
+	re3 := regexp.MustCompile(`\+`)
+	re4 := regexp.MustCompile(` `)
 	returndata = re1.ReplaceAllString(returndata, "")
 	returndata = re2.ReplaceAllString(returndata, "")
 	returndata = re3.ReplaceAllString(returndata, "%2B")
@@ -252,12 +251,13 @@ func (wepr *WebEnrollmentPendingRequest) Submit() (WebEnrollmentResponse, error)
 	case PENDING:
 		response.requestid = wepr.requestid
 	case UNAUTHORIZED:
-		return WebEnrollmentResponse{}, errors.New("Unauthorized: Access is denied")
+		return WebEnrollmentResponse{}, errors.New("unauthorized: Access is denied")
+	case DENIED:
+		return WebEnrollmentResponse{}, errors.New("request was denied")
 	case FAIL:
-		return WebEnrollmentResponse{}, errors.New("Fail: Unknown error has occurred")
+		return WebEnrollmentResponse{}, errors.New("unknown error has occurred")
 	default:
-		// need to try and establish what went wrong here
-		panic("The request failed and i do not know why")
+		return WebEnrollmentResponse{}, fmt.Errorf("the request failed and I don't know why\nresponse.status =  %d\nResponse body:%s", response.status, respbody.String())
 	}
 
 	return response, nil
@@ -319,42 +319,3 @@ func (wepr WebEnrollmentPendingRequest) parseSuccessStatus(resp []byte) int {
 
 	return returndata
 }
-
-func (wepr WebEnrollmentPendingRequest) parseSuccessRequestNumber(response string) int {
-	re := regexp.MustCompile(`certnew.cer\?ReqID=(\d+)&amp;Enc=b64`)
-
-	match := re.FindStringSubmatch(response)
-	if len(match) != 2 {
-		// no match
-		return -1
-	}
-	returndata, err := strconv.Atoi(match[1])
-	if err != nil {
-		return -1
-	}
-	return returndata
-}
-
-// // CheckPendingRequest checks the status of a pending request
-// func (wes *WebEnrollmentServer) CheckPendingRequest(cookiename, cookieval, requestid string) (WebEnrollmentResponse, error) {
-// 	/*
-// 		curl 'http://192.168.252.140'
-// 		-H 'Host: 192.168.252.140'
-// 		-H 'User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0'
-// 		-H 'Accept: text/html,application/xhtml+xml,application/xml'
-// 		-H 'Accept-Language: en-GB,en;q=0.5'
-// 		--compressed
-// 		-H 'Referer: http://192.168.252.140/certsrv/certckpn.asp'
-// 		-H 'Content-Type: application/x-www-form-urlencoded'
-// 		-H 'Cookie: Requests=%5B339%2C0%2Cyes%2CSaved%2DRequest+Certificate+%2827%2F02%2F2019++09%3A58%3A30%29%5D; ASPSESSIONIDACCABSRQ=MPAFGPCDOMACAOEKENNDCDKP'
-// 		-H 'Connection: keep-alive'
-// 		-H 'Upgrade-Insecure-Requests: 1'
-// 		--data ''
-
-// 		Mode	chkpnd
-// 		ReqID	339
-// 		SaveCert	yes
-// 		TargetStoreFlags	0
-// 	*/
-// 	return response
-// }
