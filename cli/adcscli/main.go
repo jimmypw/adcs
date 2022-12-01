@@ -47,7 +47,7 @@ func parseSwitches() options {
 	opt.username = flag.String("username", "", "The username to authenticate with")
 	opt.password = flag.String("password", "", "The password to authenticate with")
 	opt.template = flag.String("template", "", "The short name of the template you wish to use")
-	opt.requestid = flag.Int("requestid", 0, "The value of the cookie.")
+	opt.requestid = flag.Int("requestid", 0, "The request ID you wish to check")
 	opt.version = flag.Bool("v", false, "Show Version Information.")
 	flag.Parse()
 	return opt
