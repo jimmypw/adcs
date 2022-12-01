@@ -20,7 +20,7 @@ There are two modes of operation, the first is submitting a csr. The second is c
 
 ### To submit a new csr:
 
-`adcscli -csr csr.csr -out crt.crt -password 'supersecurepassword' -username auser -url http://192.168.252.140/certsrv/ -template webtemplate`
+`adcscli -new -csr csr.csr -out crt.crt -password 'supersecurepassword' -username auser -url http://192.168.252.140/certsrv/ -template webtemplate`
 
 The CSR will be submitted to the web enrollment service and will produce one of two responses.
 
