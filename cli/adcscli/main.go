@@ -15,8 +15,7 @@ type options struct {
 	csr   *string
 	stdin *bool
 
-	out    *string
-	stdout *bool
+	out *string
 
 	url       *string
 	username  *string
