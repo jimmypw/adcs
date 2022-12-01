@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"os"
 
 	"github.com/jimmypw/adcs"
@@ -69,7 +68,7 @@ func missingOption(name string) {
 
 func processSuccessfulRequest(opt options, wer adcs.WebEnrollmentResponse) {
 	if isFlagSet("out") {
-		ioutil.WriteFile(*opt.out, wer.GetCertData(), 0644)
+		os.WriteFile(*opt.out, wer.GetCertData(), 0644)
 	} else {
 		fmt.Printf("%s", wer.GetCertData())
 	}
@@ -175,7 +174,7 @@ func main() {
 		var csr []byte
 		if isFlagSet("csr") {
 			var err error
-			csr, err = ioutil.ReadFile(*opt.csr)
+			csr, err = os.ReadFile(*opt.csr)
 
 			if err != nil {
 				fmt.Printf("Error: Unable to open certificate request: %s\n", *opt.csr)
