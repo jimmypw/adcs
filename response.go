@@ -9,7 +9,7 @@ const (
 	UNAUTHORIZED = 2
 	// FAIL status
 	FAIL = 3
-	// Denied status
+	// DENIED status
 	DENIED = 4
 )
 
