@@ -26,6 +26,12 @@ type options struct {
 	version *bool
 }
 
+const (
+	EXIT_SUCCESS = 0
+	EXIT_FAIL    = 1
+	EXIT_PENDING = 2
+)
+
 func parseSwitches() options {
 	var opt options
 
@@ -36,9 +42,7 @@ func parseSwitches() options {
 	// Options
 	opt.csr = flag.String("csr", "", "The path to the certificate signing request")
 	opt.stdin = flag.Bool("stdin", false, "Provides a CSR through STDIN")
-
 	opt.out = flag.String("out", "", "Where to save the certificate, if not specified, defaults to STDOUT")
-
 	opt.url = flag.String("url", "", "The url to the web enrollment server http://webenroll/certsrv/")
 	opt.username = flag.String("username", "", "The username to authenticate with")
 	opt.password = flag.String("password", "", "The password to authenticate with")
@@ -62,7 +66,7 @@ func isFlagSet(name string) bool {
 
 func missingOption(name string) {
 	os.Stderr.WriteString(fmt.Sprintf("Error: Option -%s is required.\n", name))
-	os.Exit(1)
+	os.Exit(EXIT_FAIL)
 }
 
 func processSuccessfulRequest(opt options, wer adcs.WebEnrollmentResponse) {
@@ -93,12 +97,12 @@ func main() {
 
 	if *opt.version {
 		adcs.ShowSignature()
-		os.Exit(1)
+		os.Exit(EXIT_FAIL)
 	}
 
 	if *opt.pend && *opt.newreq {
 		os.Stderr.WriteString("You must only use one of -new and -pend.\n")
-		os.Exit(1)
+		os.Exit(EXIT_FAIL)
 	}
 
 	if *opt.pend {
@@ -130,7 +134,7 @@ func main() {
 		response, err := wes.CheckPendingRequest(*opt.requestid)
 		if err != nil {
 			fmt.Println(err)
-			os.Exit(2)
+			os.Exit(EXIT_PENDING)
 		}
 
 		processResponse(opt, response)
@@ -156,12 +160,12 @@ func main() {
 
 		if !(isFlagSet("csr") || isFlagSet("stdin")) {
 			os.Stderr.WriteString("You must specify either -csr or -stdin.\n")
-			os.Exit(1)
+			os.Exit(EXIT_FAIL)
 		}
 
 		if isFlagSet("csr") && isFlagSet("stdin") {
 			os.Stderr.WriteString("You must specify only one of either -csr or -stdin.\n")
-			os.Exit(1)
+			os.Exit(EXIT_FAIL)
 		}
 
 		wes := adcs.WebEnrollmentServer{
@@ -177,33 +181,33 @@ func main() {
 
 			if err != nil {
 				fmt.Printf("Error: Unable to open certificate request: %s\n", *opt.csr)
-				os.Exit(1)
+				os.Exit(EXIT_FAIL)
 			}
 		} else if isFlagSet("stdin") {
 			csrlen, err := os.Stdin.Read(csr)
 			if err != nil {
 				fmt.Printf("Error: read csr from stdin: %s\n", *opt.csr)
-				os.Exit(1)
+				os.Exit(EXIT_FAIL)
 			}
 			if csrlen == 0 {
 				os.Stderr.WriteString("Error: no data read from stdin\n")
-				os.Exit(1)
+				os.Exit(EXIT_FAIL)
 			}
 		} else {
 			os.Stderr.WriteString("No valid CSR source specified.\n")
-			os.Exit(1)
+			os.Exit(EXIT_FAIL)
 		}
 
 		response, err := wes.SubmitNewRequest(csr, *opt.template)
 		if err != nil {
 			fmt.Println(err)
-			os.Exit(2)
+			os.Exit(EXIT_PENDING)
 		}
 		processResponse(opt, response)
 
 	} else {
 		os.Stderr.WriteString("You must specify one of -new or -pend\n")
-		os.Exit(1)
+		os.Exit(EXIT_FAIL)
 	}
 
 }
