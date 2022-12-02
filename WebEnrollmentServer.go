@@ -25,7 +25,6 @@ func (wes *WebEnrollmentServer) SubmitNewRequest(incsr []byte, template string) 
 		csr:                 incsr,
 		template:            template,
 	}
-	// response, err := wer.do()
 	response, err := wer.Submit()
 	if err != nil {
 		return WebEnrollmentResponse{}, err
@@ -40,7 +39,6 @@ func (wes *WebEnrollmentServer) CheckPendingRequest(requestid int) (WebEnrollmen
 		webenrollmentserver: wes,
 		requestid:           requestid,
 	}
-
 	response, err := wer.Submit()
 	if err != nil {
 		return WebEnrollmentResponse{}, err
