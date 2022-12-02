@@ -21,7 +21,7 @@ type WebEnrollmentResponse struct {
 	requestid            int
 }
 
-// GetCertData returns a string of the signed certificate
+// GetCertData returns a byte array of the signed certificate
 func (wer WebEnrollmentResponse) GetCertData() []byte {
 	return wer.certificatedata
 }
