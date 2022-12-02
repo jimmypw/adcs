@@ -21,79 +21,78 @@ type WebEnrollmentNewRequest struct {
 }
 
 type certificateRequestParameters struct {
-	Mode             string
-	TargetStoreFlags int
-	SaveCert         string
-	CertRequest      string
-	CertAttrib       string
-	FriendlyType     string
-	ThumbPrint       string
+	mode             string
+	targetStoreFlags int
+	saveCert         string
+	certRequest      string
+	certAttrib       string
+	friendlyType     string
+	thumbPrint       string
 }
 
-func (reqParams *certificateRequestParameters) String() string {
+func (reqParams *certificateRequestParameters) querystring() string {
 	reqParamsReflection := reflect.Indirect(reflect.ValueOf(reqParams))
 
 	var parameters []string
 	for i := 0; i < reqParamsReflection.NumField(); i++ {
-		parameters = append(parameters, fmt.Sprintf("%s=%s", reqParamsReflection.Type().Field(i).Name, reqParamsReflection.Field(i).Interface()))
+		thisparameter := fmt.Sprintf("%s=%s", reqParamsReflection.Type().Field(i).Name, reqParamsReflection.Field(i).Interface())
+		parameters = append(parameters, thisparameter)
 	}
 
 	return strings.Join(parameters, "&")
 }
 
-// Submit implements the WebEnrollmentRequest interface
-func (wer *WebEnrollmentNewRequest) Submit() (WebEnrollmentResponse, error) {
-	response := WebEnrollmentResponse{
-		webenrollmentrequest: wer,
-	}
-
-	httpresponse, err := wer.postHTTPRequest()
+// Submit is called from the WebEnrollmentServ implements the WebEnrollmentRequest interface
+func (request *WebEnrollmentNewRequest) Submit() (response WebEnrollmentResponse, err error) {
+	response.webenrollmentrequest = request
+	response.httpresponse, err = request.postHTTPRequest()
 	if err != nil {
-		return WebEnrollmentResponse{}, err
+		return
 	}
 
-	var respbody bytes.Buffer
-	respbody.ReadFrom(httpresponse.Body)
-
-	response.status = wer.parseSuccessStatus(respbody.Bytes())
+	var responsebody bytes.Buffer
+	responsebody.ReadFrom(response.httpresponse.Body)
+	response.status = scrapeNewRequestStatus(responsebody.Bytes())
 
 	switch response.status {
 	case SUCCESS:
-		// parse certificate number
-		response.requestid = wer.parseSuccessRequestNumber(respbody.String())
-		// retrieve certificate
-		response.certificatedata, err = wer.GetServer().GetCertificate(response.requestid)
+		response.requestid = scrapeRequestNumber(responsebody.String())
+		response.certificatedata, err = request.GetServer().GetCertificate(response.requestid)
 		if err != nil {
-			return WebEnrollmentResponse{}, err
+			return
 		}
 	case PENDING:
-		// parse certificate number
-		response.requestid = wer.parsePendingRequestNumber(respbody.String())
+		response.parseSessionCookie()
+		response.requestid = scrapePendingRequestNumber(responsebody.String())
 	case UNAUTHORIZED:
-		return WebEnrollmentResponse{}, errors.New("access is denied due to invalid credentials")
+		err = errors.New("access is denied due to invalid credentials")
+		return
 	case DENIED:
-		return WebEnrollmentResponse{}, errors.New("request was denied")
+		err = errors.New("request was denied")
+		return
 	case FAIL:
-		return WebEnrollmentResponse{}, errors.New("unknown error has occurred")
+		err = errors.New("unknown error has occurred")
+		return
 	default:
-		return WebEnrollmentResponse{}, fmt.Errorf("the request failed and I don't know why\nresponse.status =  %d\nResponse body:%s", response.status, respbody.String())
+		err = fmt.Errorf("the request failed and I don't know why\nresponse.status =  %d\nResponse body:%s", response.status, responsebody.String())
+		return
 	}
 
-	return response, nil
+	return
 }
 
 // GetServer retrieves a pointer to the current WebEnrollment server to satisfy the interface
-func (wer *WebEnrollmentNewRequest) GetServer() *WebEnrollmentServer {
-	return wer.webenrollmentserver
+func (request *WebEnrollmentNewRequest) GetServer() *WebEnrollmentServer {
+	return request.webenrollmentserver
 }
 
-func (wer WebEnrollmentNewRequest) postHTTPRequest() (*http.Response, error) {
+func (request WebEnrollmentNewRequest) postHTTPRequest() (*http.Response, error) {
 
 	client := NewClient()
 
-	postbody := wer.certificateRequestBody()
-	req, _ := http.NewRequest("POST", wer.webenrollmentserver.newCertificateRequestURL(), postbody)
-	req.SetBasicAuth(wer.webenrollmentserver.Username, wer.webenrollmentserver.Password)
+	postbody := request.certificateRequestBody()
+	req, _ := http.NewRequest("POST", request.webenrollmentserver.newCertificateRequestURL(), postbody)
+	req.SetBasicAuth(request.webenrollmentserver.Username, request.webenrollmentserver.Password)
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	resp, err := client.Do(req)
 
@@ -104,8 +103,72 @@ func (wer WebEnrollmentNewRequest) postHTTPRequest() (*http.Response, error) {
 	return resp, nil
 }
 
-func (wer WebEnrollmentNewRequest) parseSuccessStatus(resp []byte) int {
-	var returndata int
+func (wer WebEnrollmentNewRequest) stringifyCertificateRequest() string {
+	// CERT=$(cat foo.csr | tr -d '\n\r' | sed 's/+/%2B/g' | tr -s ' ' '+')
+	returndata := string(wer.csr)
+	re1 := regexp.MustCompile(`\r`)
+	re2 := regexp.MustCompile(`\n`)
+	re3 := regexp.MustCompile(`\+`)
+	re4 := regexp.MustCompile(` `)
+	returndata = re1.ReplaceAllString(returndata, "")
+	returndata = re2.ReplaceAllString(returndata, "")
+	returndata = re3.ReplaceAllString(returndata, "%2B")
+	returndata = re4.ReplaceAllString(returndata, "+")
+	return returndata
+}
+
+func (request WebEnrollmentNewRequest) certAttributes() string {
+	// This function is wrong. It needs to take in to account user supplied certificate attributes.
+	return fmt.Sprintf("CertificateTemplate:%s", request.template)
+}
+
+func (request WebEnrollmentNewRequest) certificateRequestBody() io.Reader {
+	timestamp := time.Now().Format(time.RFC1123)
+
+	thisReqParams := certificateRequestParameters{
+		mode:             "newreq",
+		certRequest:      request.stringifyCertificateRequest(),
+		certAttrib:       request.certAttributes(),
+		friendlyType:     fmt.Sprintf("Saved-Request Certificate (%s)", timestamp),
+		thumbPrint:       "",
+		targetStoreFlags: 0,
+		saveCert:         "yes",
+	}
+
+	return strings.NewReader(thisReqParams.querystring())
+}
+
+func scrapePendingRequestNumber(response string) int {
+	re := regexp.MustCompile(`Your Request Id is (\d+).`)
+
+	match := re.FindStringSubmatch(response)
+	if len(match) != 2 {
+		// no match
+		return -1
+	}
+	returndata, err := strconv.Atoi(match[1])
+	if err != nil {
+		return -1
+	}
+	return returndata
+}
+
+func scrapeRequestNumber(response string) int {
+	re := regexp.MustCompile(`certnew.cer\?ReqID=(\d+)&amp;Enc=b64`)
+
+	match := re.FindStringSubmatch(response)
+	if len(match) != 2 {
+		// no match
+		return -1
+	}
+	returndata, err := strconv.Atoi(match[1])
+	if err != nil {
+		return -1
+	}
+	return returndata
+}
+
+func scrapeNewRequestStatus(resp []byte) (returndata int) {
 	issued := regexp.MustCompile("Certificate Issued")
 	pending := regexp.MustCompile("Your certificate request has been received.")
 	unauthorized := regexp.MustCompile("Unauthorized: Access is denied due to invalid credentials.")
@@ -123,70 +186,5 @@ func (wer WebEnrollmentNewRequest) parseSuccessStatus(resp []byte) int {
 		returndata = FAIL
 	}
 
-	return returndata
-}
-
-func (wer WebEnrollmentNewRequest) stringifyCertificateRequest() string {
-	// CERT=$(cat foo.csr | tr -d '\n\r' | sed 's/+/%2B/g' | tr -s ' ' '+')
-	returndata := string(wer.csr)
-	re1 := regexp.MustCompile(`\r`)
-	re2 := regexp.MustCompile(`\n`)
-	re3 := regexp.MustCompile(`\+`)
-	re4 := regexp.MustCompile(` `)
-	returndata = re1.ReplaceAllString(returndata, "")
-	returndata = re2.ReplaceAllString(returndata, "")
-	returndata = re3.ReplaceAllString(returndata, "%2B")
-	returndata = re4.ReplaceAllString(returndata, "+")
-	return returndata
-}
-
-func (wer WebEnrollmentNewRequest) certAttributes() string {
-	// This function is wrong. It needs to take in to account user supplied certificate attributes.
-	return fmt.Sprintf("CertificateTemplate:%s", wer.template)
-}
-
-func (wer WebEnrollmentNewRequest) certificateRequestBody() io.Reader {
-	timestamp := time.Now().Format(time.RFC1123)
-
-	thisReqParams := certificateRequestParameters{
-		Mode:             "newreq",
-		CertRequest:      wer.stringifyCertificateRequest(),
-		CertAttrib:       wer.certAttributes(),
-		FriendlyType:     fmt.Sprintf("Saved-Request Certificate (%s)", timestamp),
-		ThumbPrint:       "",
-		TargetStoreFlags: 0,
-		SaveCert:         "yes",
-	}
-
-	return strings.NewReader(thisReqParams.String())
-}
-
-func (wer WebEnrollmentNewRequest) parsePendingRequestNumber(response string) int {
-	re := regexp.MustCompile(`Your Request Id is (\d+).`)
-
-	match := re.FindStringSubmatch(response)
-	if len(match) != 2 {
-		// no match
-		return -1
-	}
-	returndata, err := strconv.Atoi(match[1])
-	if err != nil {
-		return -1
-	}
-	return returndata
-}
-
-func (wer WebEnrollmentNewRequest) parseSuccessRequestNumber(response string) int {
-	re := regexp.MustCompile(`certnew.cer\?ReqID=(\d+)&amp;Enc=b64`)
-
-	match := re.FindStringSubmatch(response)
-	if len(match) != 2 {
-		// no match
-		return -1
-	}
-	returndata, err := strconv.Atoi(match[1])
-	if err != nil {
-		return -1
-	}
-	return returndata
+	return
 }

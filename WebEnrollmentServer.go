@@ -34,10 +34,12 @@ func (wes *WebEnrollmentServer) SubmitNewRequest(incsr []byte, template string) 
 }
 
 // CheckPendingRequest will check to see if the request has been completed or not.
-func (wes *WebEnrollmentServer) CheckPendingRequest(requestid int) (WebEnrollmentResponse, error) {
+func (wes *WebEnrollmentServer) CheckPendingRequest(requestid int, cookiename string, cookieval string) (WebEnrollmentResponse, error) {
 	wer := WebEnrollmentPendingRequest{
 		webenrollmentserver: wes,
 		requestid:           requestid,
+		cookiename:          cookiename,
+		cookieval:           cookieval,
 	}
 	response, err := wer.Submit()
 	if err != nil {

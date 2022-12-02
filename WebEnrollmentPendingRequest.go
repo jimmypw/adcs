@@ -12,18 +12,20 @@ import (
 )
 
 type pendingRequestParameters struct {
-	Mode             string
-	TargetStoreFlags int
-	SaveCert         string
-	ReqID            int
+	mode             string
+	targetStoreFlags int
+	saveCert         string
+	reqID            int
 }
 
-func (reqParams *pendingRequestParameters) String() string {
+// String() will convert the request parameters in to a query string
+func (reqParams *pendingRequestParameters) querystring() string {
 	reqParamsReflection := reflect.Indirect(reflect.ValueOf(reqParams))
 
 	var parameters []string
 	for i := 0; i < reqParamsReflection.NumField(); i++ {
-		parameters = append(parameters, fmt.Sprintf("%s=%s", reqParamsReflection.Type().Field(i).Name, reqParamsReflection.Field(i).Interface()))
+		thisparameter := fmt.Sprintf("%s=%s", reqParamsReflection.Type().Field(i).Name, reqParamsReflection.Field(i).Interface())
+		parameters = append(parameters, thisparameter)
 	}
 
 	return strings.Join(parameters, "&")
@@ -33,36 +35,38 @@ func (reqParams *pendingRequestParameters) String() string {
 type WebEnrollmentPendingRequest struct {
 	webenrollmentserver *WebEnrollmentServer
 	requestid           int
+	cookiename          string
+	cookieval           string
 }
 
 // Submit implements the WebEnrollmentRequest interface
-func (wepr *WebEnrollmentPendingRequest) Submit() (WebEnrollmentResponse, error) {
-	response := WebEnrollmentResponse{
-		webenrollmentrequest: wepr,
-		requestid:            wepr.requestid,
-		status:               PENDING,
-	}
+func (request *WebEnrollmentPendingRequest) Submit() (response WebEnrollmentResponse, err error) {
+	response.webenrollmentrequest = request
+	response.requestid = request.requestid
+	response.status = PENDING
 
-	httpresponse, err := wepr.postHTTPRequest()
+	response.httpresponse, err = request.postHTTPRequest()
 	if err != nil {
 		return WebEnrollmentResponse{}, err
 	}
 
 	var respbody bytes.Buffer
-	respbody.ReadFrom(httpresponse.Body)
+	respbody.ReadFrom(response.httpresponse.Body)
 
-	response.status = wepr.parseSuccessStatus(respbody.Bytes())
+	response.status = scrapePendingRequestStatus(respbody.Bytes())
 
 	switch response.status {
 	case SUCCESS:
-		response.requestid = wepr.requestid
+		response.requestid = request.requestid
 		// retrieve certificate
-		response.certificatedata, err = wepr.GetServer().GetCertificate(response.requestid)
+		response.certificatedata, err = request.GetServer().GetCertificate(response.requestid)
 		if err != nil {
 			return WebEnrollmentResponse{}, err
 		}
 	case PENDING:
-		response.requestid = wepr.requestid
+		response.cookiename = request.cookiename
+		response.cookieval = request.cookieval
+		response.requestid = request.requestid
 	case UNAUTHORIZED:
 		return WebEnrollmentResponse{}, errors.New("unauthorized: Access is denied")
 	case DENIED:
@@ -77,44 +81,44 @@ func (wepr *WebEnrollmentPendingRequest) Submit() (WebEnrollmentResponse, error)
 }
 
 // GetServer retrueves a pointer to the current WebEnrollment server to satisfy the interface
-func (wepr *WebEnrollmentPendingRequest) GetServer() *WebEnrollmentServer {
-	return wepr.webenrollmentserver
+func (request *WebEnrollmentPendingRequest) GetServer() *WebEnrollmentServer {
+	return request.webenrollmentserver
 }
 
-func (wepr WebEnrollmentPendingRequest) postHTTPRequest() (*http.Response, error) {
+func (request WebEnrollmentPendingRequest) postHTTPRequest() (response *http.Response, err error) {
 
 	client := NewClient()
 
-	postbody := wepr.pendingRequestBody()
-	req, _ := http.NewRequest("POST", wepr.webenrollmentserver.newCertificateRequestURL(), postbody)
-	req.SetBasicAuth(wepr.webenrollmentserver.Username, wepr.webenrollmentserver.Password)
+	postbody := request.pendingRequestBody()
+	req, _ := http.NewRequest("POST", request.webenrollmentserver.newCertificateRequestURL(), postbody)
+	req.AddCookie(&http.Cookie{
+		Name:  request.cookiename,
+		Value: request.cookieval,
+	})
+	req.SetBasicAuth(request.webenrollmentserver.Username, request.webenrollmentserver.Password)
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-	resp, err := client.Do(req)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return resp, nil
+	response, err = client.Do(req)
+	return
 }
 
-func (wepr WebEnrollmentPendingRequest) pendingRequestBody() io.Reader {
+// pendingRequestBody will build the POST request body
+func (request WebEnrollmentPendingRequest) pendingRequestBody() io.Reader {
 	// 		Mode	chkpnd
 	// 		ReqID	339
 	// 		SaveCert	yes
 	// 		TargetStoreFlags	0
 
 	thisReqParams := pendingRequestParameters{
-		Mode:             "chkpnd",
-		TargetStoreFlags: 0,
-		SaveCert:         "yes",
-		ReqID:            wepr.requestid,
+		mode:             "chkpnd",
+		targetStoreFlags: 0,
+		saveCert:         "yes",
+		reqID:            request.requestid,
 	}
 
-	return strings.NewReader(thisReqParams.String())
+	return strings.NewReader(thisReqParams.querystring())
 }
 
-func (wepr WebEnrollmentPendingRequest) parseSuccessStatus(resp []byte) int {
+func scrapePendingRequestStatus(resp []byte) int {
 	var returndata int
 	issued := regexp.MustCompile("The certificate you requested was issued to you")
 	pending := regexp.MustCompile("still pending")

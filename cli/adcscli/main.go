@@ -17,11 +17,13 @@ type options struct {
 
 	out *string
 
-	url       *string
-	username  *string
-	password  *string
-	template  *string
-	requestid *int
+	url        *string
+	username   *string
+	password   *string
+	template   *string
+	requestid  *int
+	cookiename *string
+	cookieval  *string
 
 	version *bool
 }
@@ -47,6 +49,8 @@ func parseSwitches() options {
 	opt.username = flag.String("username", "", "The username to authenticate with")
 	opt.password = flag.String("password", "", "The password to authenticate with")
 	opt.template = flag.String("template", "", "The short name of the template you wish to use")
+	opt.cookiename = flag.String("cookiename", "", "The name of the web enrollment service cookie (Used to check pending certificates)")
+	opt.cookieval = flag.String("cookieval", "", "The value of the web enrollment service cookie (Used to check pending certificates)")
 	opt.requestid = flag.Int("requestid", 0, "The request ID you wish to check")
 	opt.version = flag.Bool("v", false, "Show Version Information.")
 	flag.Parse()
@@ -69,7 +73,7 @@ func missingOption(name string) {
 	os.Exit(EXIT_FAIL)
 }
 
-func processSuccessfulRequest(opt options, wer adcs.WebEnrollmentResponse) {
+func processSuccessfulResponse(opt options, wer adcs.WebEnrollmentResponse) {
 	if isFlagSet("out") {
 		os.WriteFile(*opt.out, wer.GetCertData(), 0644)
 	} else {
@@ -77,16 +81,17 @@ func processSuccessfulRequest(opt options, wer adcs.WebEnrollmentResponse) {
 	}
 }
 
-func processPendingRequest(opt options, wer adcs.WebEnrollmentResponse) {
+func processPendingResponse(opt options, wer adcs.WebEnrollmentResponse) {
+	// TODO: Retrieve and display cookie
 	fmt.Printf("%s -pend -url %s -requestid %d\n", os.Args[0], wer.GetRequestURL(), wer.GetRequestID())
 }
 
 func processResponse(opt options, response adcs.WebEnrollmentResponse) {
 	switch response.GetStatus() {
 	case adcs.SUCCESS:
-		processSuccessfulRequest(opt, response)
+		processSuccessfulResponse(opt, response)
 	case adcs.PENDING:
-		processPendingRequest(opt, response)
+		processPendingResponse(opt, response)
 	default:
 		os.Stderr.WriteString("Request Failed.\n")
 	}
@@ -124,6 +129,12 @@ func main() {
 		if !isFlagSet("requestid") {
 			missingOption("requestid")
 		}
+		if !isFlagSet("cookiename") {
+			missingOption("cookiename")
+		}
+		if !isFlagSet("cookieval") {
+			missingOption("cookieval")
+		}
 
 		wes := adcs.WebEnrollmentServer{
 			URL:      *opt.url,
@@ -131,7 +142,7 @@ func main() {
 			Password: *opt.password,
 		}
 
-		response, err := wes.CheckPendingRequest(*opt.requestid)
+		response, err := wes.CheckPendingRequest(*opt.requestid, *opt.cookiename, *opt.cookieval)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(EXIT_PENDING)
