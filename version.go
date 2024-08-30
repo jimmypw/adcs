@@ -9,7 +9,7 @@ const VersionMaj = 1
 const VersionMin = 2
 
 // VersionPat is the patch version
-const VersionPat = 0
+const VersionPat = 1
 
 // VersionSuffix is the suffix displayed after the version string.
 const VersionSuffix = ""
